@@ -1,0 +1,49 @@
+User-agent: *
+Disallow: /
+
+# Блокируем всех поисковых роботов
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Yandex
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: Mail.Ru
+Disallow: /
+
+User-agent: TelegramBot
+Disallow: /
+
+User-agent: Twitterbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+# Блокируем парсеры и скраперы
+User-agent: Python-urllib
+Disallow: /
+
+User-agent: curl
+Disallow: /
+
+User-agent: Wget
+Disallow: /
+
+User-agent: Go-http-client
+Disallow: /
+
+User-agent: Java
+Disallow: /
+
+User-agent: php
+Disallow: /
+
+# Задержка для тех кто игнорирует
+Crawl-delay: 10
+
+# Хуй кто проиндексирует
+Noindex: /

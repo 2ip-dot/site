@@ -1,0 +1,86 @@
+# ========== АХУЕННАЯ ЗАЩИТА .htaccess ==========
+
+# Запрещаем просмотр папок
+Options -Indexes
+Options -MultiViews
+
+# UTF-8 везде
+AddDefaultCharset utf-8
+
+# Защита от подмены MIME-типов
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Запрещаем доступ к скрытым файлам
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Запрещаем доступ к логам и конфигам
+<FilesMatch "\.(log|ini|conf|sql|bak|backup)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Только PHP может обрабатывать PHP файлы
+<FilesMatch "\.(php|php5|phtml)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Защита get_data.php - только AJAX запросы
+<Files "get_data.php">
+    SetEnvIfNoCase X-Requested-With XMLHttpRequest ajax
+    Order Deny,Allow
+    Deny from all
+    Allow from env=ajax
+</Files>
+
+# Блокируем плохих ботов и парсеры
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Блокируем wget, curl, python, go, java
+    RewriteCond %{HTTP_USER_AGENT} (wget|curl|python|java|go|perl|ruby|php) [NC]
+    RewriteRule .* - [F,L]
+    
+    # Блокируем скраперы
+    RewriteCond %{HTTP_USER_AGENT} (scraper|spider|bot|crawler|parser) [NC]
+    RewriteRule .* - [F,L]
+    
+    # Блокируем пустые user-agent
+    RewriteCond %{HTTP_USER_AGENT} ^$
+    RewriteRule .* - [F,L]
+    
+    # Защита от SQL инъекций в URL
+    RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} (SELECT|INSERT|UPDATE|DELETE|DROP|UNION) [NC]
+    RewriteRule .* - [F,L]
+    
+    # Защита от подмены хоста
+    # RewriteCond %{HTTP_HOST} !^yourdomain.com$ [NC]  — настрой под свой домен
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Сжимаем данные для скорости
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Кеширование статики
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+</IfModule>
