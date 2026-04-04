@@ -1,230 +1,233 @@
-// ── STATE ──────────────────────────────────────────────
 let DATA = [];
-let favorites = new Set(JSON.parse(localStorage.getItem('fav') || '[]'));
-let allFiltered = [];
-let page = 1;
-let busy = false;
-const PER_PAGE = 20;
+let favorites = new Set(JSON.parse(localStorage.getItem('fav') || "[]"));
 
-const state = { search: '', machine: '', volume: '', favOnly: false };
+let state = {
+    search: '',
+    machine: '',
+    volume: '',
+    favOnly: false
+};
 
-// ── DOM REFS ────────────────────────────────────────────
-const grid        = document.getElementById('grid');
-const statsEl     = document.getElementById('stats');
-const searchInput = document.getElementById('searchInput');
-const machSel     = document.getElementById('machineSelect');
-const volSel      = document.getElementById('volumeSelect');
-const themeBtn    = document.getElementById('themeBtn');
-const themeIcon   = document.getElementById('themeIcon');
-const favBtn      = document.getElementById('favBtn');
-const favCount    = document.getElementById('favCount');
-const logoutBtn   = document.getElementById('logoutBtn');
-const loader      = document.getElementById('loader');
-const sentinel    = document.getElementById('sentinel');
+let allFilteredData = [];
+let currentPage = 1;
+let isLoading = false;
+const ITEMS_PER_PAGE = 20;
 
-// ── THEME ───────────────────────────────────────────────
-function applyTheme(light) {
-    document.body.classList.toggle('light', light);
-    themeIcon.className = light ? 'fas fa-sun' : 'fas fa-moon';
+const container = document.getElementById('resultsContainer');
+const input = document.getElementById('searchInput');
+const stats = document.getElementById('stats');
+const machineSelect = document.getElementById('machineSelect');
+const volumeSelect = document.getElementById('volumeSelect');
+const themeBtn = document.getElementById('themeBtn');
+const favBtn = document.getElementById('favBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const suggestions = document.getElementById('suggestions');
+
+// Загрузка данных с сервера с фильтрацией
+async function loadDataFromServer() {
+    try {
+        stats.textContent = '📡 Загрузка...';
+        
+        let url = `get_data.php?search=${encodeURIComponent(state.search)}&machine=${encodeURIComponent(state.machine)}&volume=${encodeURIComponent(state.volume)}`;
+        
+        const response = await fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        if (response.status === 401) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки');
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        DATA = data;
+        
+        // Применяем фильтр избранного на клиенте
+        if (state.favOnly) {
+            allFilteredData = DATA.filter((_, i) => favorites.has(String(i)));
+        } else {
+            allFilteredData = DATA;
+        }
+        
+        currentPage = 1;
+        container.innerHTML = '';
+        loadMore();
+        
+        stats.textContent = `📊 Найдено: ${allFilteredData.length} позиций`;
+        
+        // Обновляем фильтры (только при первой загрузке)
+        if (machineSelect.options.length <= 1) {
+            initFiltersFromData();
+        }
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        stats.textContent = '❌ Ошибка загрузки данных';
+        container.innerHTML = '<div style="text-align:center;padding:40px;">⚠️ Не удалось загрузить данные</div>';
+    }
 }
-const savedTheme = localStorage.getItem('theme');
-applyTheme(savedTheme === 'light');
+
+// Заполняем выпадающие списки из загруженных данных
+function initFiltersFromData() {
+    if (!DATA.length) return;
+    
+    const machines = [...new Set(DATA.map(i => i[0]))];
+    const volumes = [...new Set(DATA.map(i => i[1]))];
+    
+    machines.sort().forEach(m => {
+        if (![...machineSelect.options].some(opt => opt.value === m)) {
+            machineSelect.innerHTML += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
+        }
+    });
+    
+    volumes.sort().forEach(v => {
+        if (v && v.trim() && ![...volumeSelect.options].some(opt => opt.value === v)) {
+            volumeSelect.innerHTML += `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`;
+        }
+    });
+}
+
+// Выход
+logoutBtn.onclick = () => {
+    window.location.href = 'logout.php';
+};
+
+// Тема
+if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark');
+}
 
 themeBtn.onclick = () => {
-    const isLight = document.body.classList.toggle('light');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    themeIcon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
 };
 
-// ── LOGOUT ──────────────────────────────────────────────
-logoutBtn.onclick = () => { window.location.href = 'logout.php'; };
-
-// ── FAVOURITES ──────────────────────────────────────────
-function saveFavs() { localStorage.setItem('fav', JSON.stringify([...favorites])); }
-
-function updateFavBadge() {
-    const n = favorites.size;
-    favCount.textContent = n;
-    favCount.classList.toggle('show', n > 0 && state.favOnly);
-}
-
-window.toggleFav = function(id) {
-    if (favorites.has(id)) favorites.delete(id);
-    else favorites.add(id);
-    saveFavs();
-    updateFavBadge();
-
-    const btn = document.querySelector(`.fav-btn[data-id="${id}"]`);
-    if (btn) btn.classList.toggle('active', favorites.has(id));
-
-    if (state.favOnly) {
-        allFiltered = DATA.filter(i => favorites.has(i._id));
-        page = 1;
-        renderCards(true);
-        updateStats();
+// Избранное
+function toggleFav(index) {
+    const originalIndex = DATA.findIndex(d => d === allFilteredData[index]);
+    const id = String(originalIndex);
+    if (favorites.has(id)) {
+        favorites.delete(id);
+    } else {
+        favorites.add(id);
     }
-};
+    localStorage.setItem('fav', JSON.stringify([...favorites]));
+    
+    if (state.favOnly) {
+        loadDataFromServer();
+    } else {
+        allFilteredData = DATA;
+        currentPage = 1;
+        container.innerHTML = '';
+        loadMore();
+        stats.textContent = `📊 Найдено: ${allFilteredData.length} позиций`;
+    }
+}
+window.toggleFav = toggleFav;
 
 favBtn.onclick = () => {
     state.favOnly = !state.favOnly;
-    favBtn.classList.toggle('active', state.favOnly);
-    updateFavBadge();
-    load();
+    favBtn.style.background = state.favOnly ? '#facc15' : '';
+    favBtn.style.color = state.favOnly ? '#000' : '';
+    loadDataFromServer();
 };
 
-// ── ESCAPE ──────────────────────────────────────────────
-function esc(s) {
-    if (s == null) return '';
-    return String(s).replace(/[&<>"']/g, m =>
-        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
-// ── CARD TEMPLATE ───────────────────────────────────────
-function cardHTML(item) {
-    const isFav = favorites.has(item._id);
+function card(item, index) {
+    const [machine, volume, name, dorn, nozzle, knife, weight] = item;
+    const originalIndex = DATA.findIndex(d => d === item);
+    const isFav = favorites.has(String(originalIndex));
+    
     return `
-<div class="card">
-    <button class="fav-btn ${isFav ? 'active' : ''}" data-id="${item._id}"
-        onclick="toggleFav('${item._id}')" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">
-        <i class="fas fa-star"></i>
-    </button>
-    <div class="card-name">${esc(item[2])}</div>
-    <div class="card-vol"><i class="fas fa-tint" style="font-size:9px"></i> ${esc(item[1]) || '—'}</div>
-    <div class="params">
-        <div class="param">
-            <span class="param-label"><i class="fas fa-circle" style="font-size:7px;color:#3b7dd8"></i> Дорн</span>
-            <span class="param-val">${esc(item[3]) || '—'}</span>
+        <div class="card ${isFav ? 'fav-card' : ''}">
+            <div class="favorite" onclick="window.toggleFav(${index})">
+                <i class="fas fa-star" style="color: ${isFav ? '#facc15' : '#ccc'}"></i>
+            </div>
+            <div class="product">${escapeHtml(name)}</div>
+            <div class="liters">💧 ${escapeHtml(volume) || '—'}</div>
+            <div class="params">
+                <div class="param">⚙️ Дорн: ${escapeHtml(dorn) || '—'}</div>
+                <div class="param">🔩 Сопло: ${escapeHtml(nozzle) || '—'}</div>
+                <div class="param">✂️ Нож: ${escapeHtml(knife) || '—'}</div>
+                <div class="param weight">⚖️ Вес: ${escapeHtml(weight) || 'уточняется'}</div>
+            </div>
+            <div class="machine">🏭 ${escapeHtml(machine)}</div>
         </div>
-        <div class="param">
-            <span class="param-label"><i class="fas fa-dot-circle" style="font-size:9px;color:#3b7dd8"></i> Сопло</span>
-            <span class="param-val">${esc(item[4]) || '—'}</span>
-        </div>
-        <div class="param">
-            <span class="param-label"><i class="fas fa-cut" style="font-size:11px;color:#3b7dd8"></i> Нож</span>
-            <span class="param-val">${esc(item[5]) || '—'}</span>
-        </div>
-        <div class="param weight-row">
-            <span class="param-label"><i class="fas fa-weight-hanging" style="font-size:11px"></i> Вес</span>
-            <span class="param-val">${esc(item[6]) || 'уточняется'}</span>
-        </div>
-    </div>
-    <div class="card-machine">
-        <i class="fas fa-industry" style="font-size:11px"></i>
-        <span>${esc(item[0])}</span>
-    </div>
-</div>`;
+    `;
 }
 
-// ── RENDER ──────────────────────────────────────────────
-function renderCards(reset = false) {
-    const items = allFiltered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-    if (reset) {
-        // Remove all card nodes but keep sentinel
-        [...grid.children].forEach(el => {
-            if (el !== sentinel) el.remove();
-        });
-    }
-
-    if (items.length === 0 && reset) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.innerHTML = `<div class="empty-icon">🔩</div><p>Ничего не найдено</p>`;
-        grid.insertBefore(empty, sentinel);
-        return;
-    }
-
-    const frag = document.createDocumentFragment();
-    items.forEach(item => {
-        const div = document.createElement('div');
-        div.innerHTML = cardHTML(item);
-        frag.appendChild(div.firstElementChild);
-    });
-    grid.insertBefore(frag, sentinel);
-    page++;
+function loadMore() {
+    if (isLoading) return;
+    
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const itemsToLoad = allFilteredData.slice(start, end);
+    
+    if (itemsToLoad.length === 0) return;
+    
+    isLoading = true;
+    
+    const newCards = itemsToLoad.map((item, idx) => {
+        const globalIndex = start + idx;
+        return card(item, globalIndex);
+    }).join('');
+    
+    container.innerHTML += newCards;
+    currentPage++;
+    isLoading = false;
 }
 
-function updateStats() {
-    const total = allFiltered.length;
-    statsEl.innerHTML = `Найдено: <span>${total}</span> позиций${state.favOnly ? ' &nbsp;·&nbsp; <span style="color:var(--accent)">⭐ Избранное</span>' : ''}`;
-}
-
-// ── LOAD FROM SERVER ────────────────────────────────────
-async function load() {
-    try {
-        statsEl.textContent = 'Загрузка...';
-        const url = `get_data.php?search=${encodeURIComponent(state.search)}&machine=${encodeURIComponent(state.machine)}&volume=${encodeURIComponent(state.volume)}`;
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-
-        if (res.status === 401) { window.location.href = 'login.html'; return; }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        const raw = await res.json();
-        if (raw.error) throw new Error(raw.error);
-
-        // Attach unique id to each row
-        DATA = raw.map((item, i) => Object.assign(item, { _id: String(i) }));
-
-        allFiltered = state.favOnly
-            ? DATA.filter(i => favorites.has(i._id))
-            : DATA;
-
-        page = 1;
-        renderCards(true);
-        updateStats();
-
-        if (machSel.options.length <= 1) initFilters();
-    } catch (err) {
-        console.error(err);
-        statsEl.textContent = '❌ Ошибка загрузки';
-        [...grid.children].forEach(el => { if (el !== sentinel) el.remove(); });
-        const div = document.createElement('div');
-        div.className = 'empty';
-        div.innerHTML = `<div class="empty-icon">⚠️</div><p>Не удалось загрузить данные</p>`;
-        grid.insertBefore(div, sentinel);
-    } finally {
-        loader.classList.add('gone');
-    }
-}
-
-// ── INIT FILTERS ────────────────────────────────────────
-function initFilters() {
-    const machines = [...new Set(DATA.map(i => i[0]))].filter(Boolean).sort();
-    const volumes  = [...new Set(DATA.map(i => i[1]))].filter(Boolean).sort();
-
-    machines.forEach(m => {
-        const o = document.createElement('option');
-        o.value = o.textContent = m;
-        machSel.appendChild(o);
-    });
-    volumes.forEach(v => {
-        const o = document.createElement('option');
-        o.value = o.textContent = v;
-        volSel.appendChild(o);
-    });
-}
-
-// ── INFINITE SCROLL ──────────────────────────────────────
-const observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && !busy) {
-        if (page * PER_PAGE <= allFiltered.length + PER_PAGE) {
-            busy = true;
-            renderCards();
-            busy = false;
+function handleScroll() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    
+    if (scrollTop + windowHeight >= documentHeight - 200) {
+        if (currentPage * ITEMS_PER_PAGE < allFilteredData.length) {
+            loadMore();
         }
     }
-}, { rootMargin: '200px' });
-observer.observe(sentinel);
+}
 
-// ── EVENTS ───────────────────────────────────────────────
-let debounce;
-searchInput.addEventListener('input', e => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => { state.search = e.target.value; load(); }, 280);
+// События фильтрации
+let debounceTimer;
+input.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        state.search = e.target.value.toLowerCase();
+        loadDataFromServer();
+    }, 300);
 });
-machSel.onchange  = e => { state.machine = e.target.value; load(); };
-volSel.onchange   = e => { state.volume  = e.target.value; load(); };
 
-// ── INIT ─────────────────────────────────────────────────
-updateFavBadge();
-load();
+machineSelect.onchange = (e) => {
+    state.machine = e.target.value;
+    loadDataFromServer();
+};
+
+volumeSelect.onchange = (e) => {
+    state.volume = e.target.value;
+    loadDataFromServer();
+};
+
+window.addEventListener('scroll', handleScroll);
+
+// Запуск
+loadDataFromServer();

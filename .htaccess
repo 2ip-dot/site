@@ -66,7 +66,7 @@ AddDefaultCharset utf-8
     RewriteRule .* - [F,L]
     
     # Защита от подмены хоста
-    # RewriteCond %{HTTP_HOST} !^yourdomain.com$ [NC]  — настрой под свой домен
+    RewriteCond %{HTTP_HOST} !^g9050059\.beget\.tech$ [NC]
     RewriteRule .* - [F,L]
 </IfModule>
 

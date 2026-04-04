@@ -4,175 +4,278 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Оснастка PRO</title>
-<link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-:root{
-    --ink:#0a0c10;--steel:#141824;--panel:#0f1319;--card:#141824;--border:#1e2638;
-    --accent:#e8a020;--accent2:#3b7dd8;--text:#c8d0e0;--muted:#4a5470;
-    --ok:#20c060;--danger:#e03030;--param-bg:#1a2035;--tag-bg:#1e2a40;
-    --weight-bg:#2a1e00;--weight-color:#e8a020;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-body.light{
-    --ink:#f0f2f6;--steel:#fff;--panel:#fff;--card:#fff;--border:#dde3ef;
-    --text:#1e2638;--muted:#7a88a8;--param-bg:#eef1f8;--tag-bg:#e6ecf8;
-    --weight-bg:#fff3d6;--weight-color:#b87800;
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    transition: 0.3s;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:'Rajdhani',sans-serif;background:var(--ink);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
 
-/* Grid BG (dark only) */
-body:not(.light)::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,125,216,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,125,216,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-
-/* ── LOADER ── */
-#loader{position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
-#loader.gone{opacity:0;pointer-events:none}
-.spinner-hex{width:56px;height:56px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:conic-gradient(var(--accent),#c07010,var(--accent));animation:spin .8s linear infinite;margin-bottom:20px}
-@keyframes spin{to{transform:rotate(360deg)}}
-#loader p{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:2px}
-
-/* ── HEADER ── */
-.header{position:sticky;top:0;z-index:100;background:var(--panel);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-body:not(.light) .header{box-shadow:0 4px 24px rgba(0,0,0,.4)}
-body.light .header{box-shadow:0 2px 12px rgba(0,0,0,.08)}
-.logo{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.logo-hex{width:36px;height:36px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(135deg,var(--accent),#c07010);display:flex;align-items:center;justify-content:center;font-size:16px}
-.logo h1{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:2px}
-.header-right{display:flex;align-items:center;gap:8px}
-
-/* ── ICON BTN ── */
-.icon-btn{width:38px;height:38px;border:1px solid var(--border);background:var(--steel);color:var(--text);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:.2s;flex-shrink:0}
-.icon-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
-.icon-btn.active{background:var(--accent);border-color:var(--accent);color:#000}
-
-.logout-btn{padding:0 16px;width:auto;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;gap:6px}
-.logout-btn:hover{border-color:var(--danger)!important;color:var(--danger)!important}
-
-/* ── TOOLBAR ── */
-.toolbar{padding:16px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);background:var(--panel);position:sticky;top:64px;z-index:99}
-
-.search-wrap{position:relative;flex:1;min-width:200px;max-width:360px}
-.search-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
-#searchInput{width:100%;padding:10px 14px 10px 38px;background:var(--steel);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;border-radius:10px;outline:none;transition:.2s}
-#searchInput:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,160,32,.15)}
-#searchInput::placeholder{color:var(--muted)}
-
-.sel-wrap{position:relative}
-.sel-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
-select{appearance:none;padding:10px 32px 10px 34px;background:var(--steel);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;border-radius:10px;outline:none;transition:.2s;cursor:pointer;min-width:140px}
-select:focus{border-color:var(--accent)}
-.sel-wrap::after{content:'⌄';position:absolute;right:10px;top:50%;transform:translateY(-55%);color:var(--muted);pointer-events:none;font-size:16px}
-
-/* ── STATS BAR ── */
-#stats{padding:10px 24px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border)}
-#stats span{color:var(--accent);font-weight:600}
-
-/* ── GRID ── */
-.grid-wrap{padding:20px 24px 40px;position:relative;z-index:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-
-/* ── CARD ── */
-.card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:18px;
-    position:relative;
-    transition:transform .22s,box-shadow .22s,border-color .22s;
-    animation:fadeUp .3s ease both;
+body.dark {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f1f5f9;
 }
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 16px 40px rgba(0,0,0,.25),0 0 0 1px var(--accent)}
-body.light .card:hover{box-shadow:0 12px 32px rgba(0,0,0,.1),0 0 0 1px var(--accent)}
-.card::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(232,160,32,.03),transparent);pointer-events:none;opacity:0;transition:.22s}
-.card:hover::before{opacity:1}
 
-.fav-btn{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:17px;padding:4px;transition:.2s;line-height:1;color:var(--muted)}
-.fav-btn:hover{transform:scale(1.2);color:var(--accent)}
-.fav-btn.active{color:#facc15}
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-.card-name{font-size:16px;font-weight:700;color:var(--text);padding-right:28px;margin-bottom:8px;line-height:1.3}
-.card-vol{display:inline-flex;align-items:center;gap:5px;background:var(--tag-bg);color:var(--accent2);padding:3px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;margin-bottom:14px;border:1px solid rgba(59,125,216,.2)}
-.params{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.param{display:flex;justify-content:space-between;align-items:center;background:var(--param-bg);padding:7px 10px;border-radius:8px;font-size:13px;font-weight:500}
-.param-label{color:var(--muted);display:flex;align-items:center;gap:6px}
-.param-val{color:var(--text);font-weight:600;text-align:right;max-width:60%}
-.param.weight-row{background:var(--weight-bg);border:1px solid rgba(232,160,32,.2)}
-.param.weight-row .param-label,.param.weight-row .param-val{color:var(--weight-color)}
-.card-machine{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding-top:12px;border-top:1px solid var(--border)}
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px 0;
+}
 
-/* ── EMPTY STATE ── */
-.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;padding:80px 20px;color:var(--muted);gap:16px}
-.empty-icon{font-size:48px;opacity:.3}
-.empty p{font-family:'JetBrains Mono',monospace;font-size:13px}
+h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
-/* ── FAV BADGE ── */
-.fav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--accent);color:#000;border-radius:9px;font-size:10px;font-weight:700;padding:0 5px;margin-left:4px;font-family:'JetBrains Mono',monospace;display:none}
-.fav-badge.show{display:inline-flex}
+.dark h1 {
+    background: linear-gradient(135deg, #a5f3fc, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
-/* ── LOAD MORE sentinel ── */
-#sentinel{height:40px;width:100%;grid-column:1/-1}
+/* Controls */
+.controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
 
-/* ── RESPONSIVE ── */
-@media(max-width:640px){
-    .header{padding:0 14px;height:56px}
-    .toolbar{padding:12px 14px;top:56px}
-    .grid-wrap{padding:14px 14px 40px}
-    #stats{padding:8px 14px}
-    .search-wrap{max-width:100%;flex:1 1 100%}
-    select{min-width:0;flex:1}
+input, select {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    background: white;
+    transition: 0.2s;
+}
+
+.dark input, .dark select {
+    background: #334155;
+    border-color: #475569;
+    color: white;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #2a5298;
+    box-shadow: 0 0 0 3px rgba(42,82,152,0.1);
+}
+
+#searchInput {
+    width: 250px;
+}
+
+button {
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+#themeBtn, #favBtn {
+    background: #1e293b;
+    color: white;
+}
+
+#logoutBtn {
+    background: #dc2626;
+    color: white;
+}
+
+#logoutBtn:hover {
+    background: #b91c1c;
+}
+
+.dark #themeBtn, .dark #favBtn {
+    background: #475569;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+/* Stats */
+#stats {
+    margin-bottom: 20px;
+    padding: 10px;
+    font-weight: 500;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Card */
+.card {
+    background: white;
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: 0.25s;
+    position: relative;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark .card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.favorite {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.2s;
+}
+
+.favorite:hover {
+    transform: scale(1.1);
+}
+
+.product {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    padding-right: 30px;
+    color: #1e293b;
+}
+
+.dark .product {
+    color: #f1f5f9;
+}
+
+.liters {
+    display: inline-block;
+    background: #eef2ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.dark .liters {
+    background: #334155;
+}
+
+.params {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.param {
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dark .param {
+    border-bottom-color: #334155;
+}
+
+.weight {
+    background: #fef3c7;
+    border-radius: 12px;
+    padding: 5px 10px;
+    font-weight: 700;
+    color: #b45309;
+    border-bottom: none;
+}
+
+.dark .weight {
+    background: #451a03;
+    color: #fde68a;
+}
+
+.machine {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 12px;
+    color: #666;
+}
+
+.dark .machine {
+    border-top-color: #334155;
+    color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .container {
+        padding: 15px;
+    }
+    #searchInput {
+        width: 100%;
+    }
+    .controls {
+        width: 100%;
+    }
+    input, select, button {
+        flex: 1;
+    }
 }
 </style>
 </head>
 <body>
 
-<div id="loader">
-    <div class="spinner-hex"></div>
-    <p>ЗАГРУЗКА ДАННЫХ...</p>
-</div>
-
-<header class="header">
-    <div class="logo">
-        <div class="logo-hex">⚙</div>
-        <h1>Оснастка PRO</h1>
+<div class="container">
+    <div class="header">
+        <h1>🏭 Оснастка PRO</h1>
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск..." list="suggestions">
+            <datalist id="suggestions"></datalist>
+            <select id="machineSelect">
+                <option value="">📌 Все машины</option>
+            </select>
+            <select id="volumeSelect">
+                <option value="">📏 Все объемы</option>
+            </select>
+            <button id="favBtn">⭐ Избранное</button>
+            <button id="themeBtn">🌙 Тема</button>
+            <button id="logoutBtn" style="background:#dc2626;">🚪 Выйти</button>
+        </div>
     </div>
-    <div class="header-right">
-        <button class="icon-btn" id="favBtn" title="Избранное">
-            <i class="fas fa-star"></i><span class="fav-badge" id="favCount"></span>
-        </button>
-        <button class="icon-btn" id="themeBtn" title="Тема">
-            <i class="fas fa-moon" id="themeIcon"></i>
-        </button>
-        <button class="icon-btn logout-btn" id="logoutBtn">
-            <i class="fas fa-sign-out-alt"></i> Выйти
-        </button>
-    </div>
-</header>
-
-<div class="toolbar">
-    <div class="search-wrap">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Поиск по названию, машине..." list="suggestions" autocomplete="off">
-        <datalist id="suggestions"></datalist>
-    </div>
-    <div class="sel-wrap">
-        <i class="fas fa-industry"></i>
-        <select id="machineSelect"><option value="">Все машины</option></select>
-    </div>
-    <div class="sel-wrap">
-        <i class="fas fa-tint"></i>
-        <select id="volumeSelect"><option value="">Все объёмы</option></select>
-    </div>
-</div>
-
-<div id="stats">Загрузка...</div>
-
-<div class="grid-wrap">
-    <div class="grid" id="grid">
-        <div id="sentinel"></div>
-    </div>
+    <div id="stats"></div>
+    <div class="grid" id="resultsContainer"></div>
 </div>
 
 <script type="module" src="app.js"></script>
